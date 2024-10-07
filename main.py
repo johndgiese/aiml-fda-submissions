@@ -1,12 +1,14 @@
-import argparse
-
 import pandas as pd
 import matplotlib.pyplot as plt
+import argparse
+import os
 
 
 def process_data(df):
     df = df[df['Date of Final Decision'].notna()]
-    df['Date of Final Decision'] = pd.to_datetime(df['Date of Final Decision'], format='%m/%d/%Y', errors='coerce')
+    df['Date of Final Decision'] = pd.to_datetime(
+        df['Date of Final Decision'], format='%m/%d/%Y', errors='coerce'
+    )
     df = df.dropna(subset=['Date of Final Decision'])
     df['Year'] = df['Date of Final Decision'].dt.year
     submission_counts = df.groupby(['Year', 'Panel (lead)']).size().unstack(fill_value=0)
@@ -25,23 +27,25 @@ def generate_plot(submission_counts):
     return fig
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Process 510(k) submission data and generate a graph.')
+def run(input_file, output_file):
+    df = pd.read_csv(input_file)
+    submission_counts = process_data(df)
+    fig = generate_plot(submission_counts)
+    fig.savefig(output_file, dpi=300, bbox_inches='tight')
+    print(f"Graph saved as {output_file}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Process 510(k) submission data and generate a graph.'
+    )
     parser.add_argument('input_file', help='Path to the input CSV file')
     parser.add_argument('output_file', help='Path for the output graph image')
     args = parser.parse_args()
 
     try:
-        df = pd.read_csv(args.input_file)
-        submission_counts = process_data(df)
-        fig = generate_plot(submission_counts)
-        fig.savefig(args.output_file, dpi=300, bbox_inches='tight')
-        print(f"Graph saved as {args.output_file}")
+        run(args.input_file, args.output_file)
     except FileNotFoundError:
         print(f"Error: The input file '{args.input_file}' was not found.")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()
