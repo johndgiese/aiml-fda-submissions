@@ -11,6 +11,8 @@ def process_data(df):
     )
     df = df.dropna(subset=['Date of Final Decision'])
     df['Year'] = df['Date of Final Decision'].dt.year
+    # Filter to include only years from 2016 onwards
+    df = df[df['Year'] >= 2016]
     submission_counts = df.groupby(['Year', 'Panel (lead)']).size().unstack(fill_value=0)
     return submission_counts.sort_index()
 
